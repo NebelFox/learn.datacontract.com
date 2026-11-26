@@ -38,4 +38,33 @@ jobs:
           docker compose exec -T postgres psql -U workshop -d workshop -v ON_ERROR_STOP=1 < sql/sku_sales_per_year.sql
       - name: Test data contracts
         run: datacontract ci *.odcs.yaml
+  breaking-changes:
+    name: Breaking changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@10.2.0
+      - name: Install the CLIs
+        run: uv tool install --python 3.11 'datacontract-cli[postgres]==1.2.3'
+      - name: Compare with base branch
+        env:
+          BASE: origin/${{ github.base_ref }}
+        run: |
+          status=0
+          for file in $(git ls-tree --namy-only "$BASE" | grep '\.odcs\.yaml$'); do
+            if [ ! -f "$file" ]; then
+              echo "::error file=$file::Data contract $file was removed"
+              status=1
+              continue
+            fi
+            git show "$BASE:$file" > "$RUNNER_TEMP/$file"
+            if ! datacontract breaking "$RUNNER_TEMP/$file" "$file"; then
+              echo "::error file=$file::Breaking change in $file. Release a new major version instead."
+              status=1
+            fi
+          done
+          exit $status
 
