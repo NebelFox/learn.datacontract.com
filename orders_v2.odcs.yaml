@@ -40,6 +40,11 @@ schema:
             mustBe: 0
           - type: "text"
             description: "order total is in cents"
+      - name: "customer_id"
+        logicalType: "string"
+        description: "Identificator of the customer"
+        physicalType: "TEXT"
+        deprecated: true
       - name: "customer_email_address"
         logicalType: "string"
         description: ""
