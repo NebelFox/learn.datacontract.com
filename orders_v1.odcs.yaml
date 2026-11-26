@@ -22,7 +22,7 @@ schema:
     physicalType: "table"
     properties:
       - name: "order_id"
-        logicalType: "text"
+        logicalType: "string"
         description: ""
         physicalType: "TEXT"
       - name: "order_timestamp"
