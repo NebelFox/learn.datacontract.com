@@ -1,0 +1,41 @@
+apiVersion: v1.1.0
+kind: DataProduct
+id: orders
+name: Orders
+version: v1.0.0
+status: active
+type: sourceAligned  # sourceAligned | aggregate | consumerAligned
+
+description:
+  purpose: For getting into on orders and their content
+  usage: Intended usage of the data product.
+  limitations: Price is in cents.
+
+tags: ['orders', 'ecommerce']
+
+# inputPorts:
+#   - name: source-data
+#     version: 1.0.0
+#     contractId: 00000000-0000-0000-0000-000000000000
+
+outputPorts:
+  - name: orders_v1
+    description: Orders and line items tables in PostgreSQL (v1, superseded by v2)
+    deprecated: true
+    version: 1.0.0
+    contractId: orders_v1
+  - name: orders_v2
+    description: Orders and line items tables in PostgreSQL (v2, superseding v1)
+    version: 2.0.0
+    contractId: orders_v2
+
+support:
+  - channel: "#order-data-help"
+    url: https://example.slack.com/archives/order-data-help
+    tool: slack
+
+team:
+  name: order_data_team
+  members:
+    - username: owner@example.com
+      role: owner

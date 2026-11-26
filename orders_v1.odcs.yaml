@@ -1,0 +1,135 @@
+apiVersion: "v3.2.0"
+kind: "DataContract"
+id: "orders_v1"
+name: "Orders"
+version: "1.0.0"
+status: "retired"
+servers:
+  - server: "Orders"
+    type: "postgres"
+    host: "localhost"
+    port: 5433
+    database: "workshop"
+    schema: "orders_v1"
+schema:
+  - name: "orders"
+    synonyms:
+      - synonym: "purchases"
+      - synonym: "Bestellungen"
+        locale: "de"
+    businessName: "Schema 1"
+    logicalType: "object"
+    physicalType: "table"
+    properties:
+      - name: "order_id"
+        logicalType: "string"
+        description: ""
+        physicalType: "TEXT"
+      - name: "order_timestamp"
+        description: ""
+        logicalType: "timestamp"
+        physicalType: "TIMESTAMP"
+      - name: "order_total"
+        logicalType: "integer"
+        description: ""
+        physicalType: "BIGINT"
+        quality:
+          - type: "sql"
+            description: "order_total is not negative"
+            query: "select count(*) from orders_v1.orders where order_total < 0;"
+            mustBe: 0
+          - type: "text"
+            description: "order total is in cents"
+      - name: "customer_id"
+        logicalType: "string"
+        description: ""
+        physicalType: "TEXT"
+      - name: "customer_email_address"
+        logicalType: "string"
+        description: ""
+        physicalType: "TEXT"
+        examples:
+          - "test123@example.com"
+        classification: "confidental"
+        required: true
+        quality:
+          - type: "sql"
+            description: "ensure email address is valid"
+            query: "select count(*) from orders_v1.orders where customer_email_address NOT LIKE '%@%';"
+            mustBe: 0
+    quality:
+      - type: "library"
+        metric: "rowCount"
+        mustBeGreaterThan: 0
+    context:
+      instructions: "One row per order.  Join line_items on order_id to get the purchased SKUs."
+  - name: "line_items"
+    synonyms:
+      - synonym: "order lines"
+    businessName: "Schema 2"
+    logicalType: "object"
+    physicalType: "table"
+    properties:
+      - name: "lines_item_id"
+        logicalType: "string"
+        description: ""
+        physicalType: "TEXT"
+      - name: "order_id"
+        logicalType: "string"
+        description: ""
+        physicalType: "TEXT"
+        relationships:
+          - type: "foreignKey"
+            to: "orders.order_id"
+        quality:
+          - type: "sql"
+            description: "order of line item exists in orders table"
+            query: "select count(*) \nfrom {schema}.line_items as i \nleft join {schema}.orders as o\non i.order_id = o.order_id\nwhere o.order_id is null\n"
+            mustBe: 0
+      - name: "sku"
+        logicalType: "string"
+        description: ""
+        physicalType: "TEXT"
+    context:
+      instructions: "One row per purchased SKU in an order."
+tags:
+  - "orders"
+  - "ecommerce"
+description:
+  purpose: "Store info about customer orders"
+  usage: "query as much as you want, who cares"
+  limitations: "Use it for good, don't use it for evil"
+context:
+  instructions: |-
+    Orders of the e-commerce platform and their line items.
+    order_total is in cents. Timestamps are in UTC.
+    Use this data for order volume and revenue analysis.
+  verifiedStatements:
+    - question: "How many orders were placed in 2023?"
+      answer: "SELECT COUNT(*) FROM orders_v1.orders WHERE EXTRACT(YEAR FROM order_timestamp) = '2023';"
+    - question: "What was the revenue per year"
+      answer: "SELECT EXTRACT(YEAR FROM order_timestamp)::int as year, SUM(order_total) / 100.0 as total_revenue from orders_v1.orders group by 1 order by 1;"
+  constraints:
+    - constraint: "Never output customer_email_address or customer_id. Aggregate the data instead"
+      tags:
+        - "pii"
+team:
+  name: "order_data_team"
+  members:
+    - username: "owner@example.com"
+      name: ""
+      role: "Owner"
+support:
+  - channel: "#order-data-help"
+    url: "https://example.slack.com/archives/order-data-help"
+    tool: "slack"
+slaProperties:
+  - property: "retention"
+    value: 10
+    unit: "y"
+    element: "orders.order_timestamp"
+    description: "Orders are deleted after 10 years"
+  - property: "frequency"
+    value: 1
+    unit: "d"
+    description: "Data updated daily"

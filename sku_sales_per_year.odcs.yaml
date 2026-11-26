@@ -1,0 +1,63 @@
+apiVersion: "v3.2.0"
+kind: "DataContract"
+id: "sku_sales_per_year"
+name: "SKU Sales Per Year"
+version: "1.0.0"
+status: "active"
+servers:
+  - server: "postgres"
+    type: "postgres"
+    host: "localhost"
+    port: 5433
+    database: "workshop"
+    schema: "analytics"
+schema:
+  - name: "sku_sales_per_year"
+    businessName: "Schema 1"
+    logicalType: "object"
+    physicalType: "view"
+    properties:
+      - name: "sku"
+        logicalType: "string"
+        description: "The product SKU"
+        physicalType: "TEXT"
+        semanticType: "dimension"
+      - name: "year"
+        logicalType: "integer"
+        description: "Year of the order"
+        physicalType: "INTEGER"
+        semanticType: "dimension"
+      - name: "order_count"
+        description: "How many orders contained SKU"
+        logicalType: "integer"
+        physicalType: "BIGINT"
+        semanticType: "measure"
+        transformLogic: "COUNT(*)"
+      - name: "total_quantity"
+        logicalType: "integer"
+        description: "Total units bought"
+        physicalType: "BIGINT"
+        semanticType: "measure"
+        transformLogic: "SUM(line_items.quantity)"
+    quality:
+      - type: "library"
+        metric: "duplicateValues"
+        arguments:
+          properties:
+            - "sku"
+            - "year"
+        mustBe: 0
+        description: "SKU and year combination is unique"
+      - type: "library"
+        metric: "rowCount"
+        mustBeGreaterThan: 0
+        description: "The view is not empty"
+      - type: "sql"
+        description: "Total quantity is at least order count"
+        query: "SELECT COUNT(*) FROM {schema}.{table} WHERE total_quantity < order_count"
+        mustBe: 0
+context:
+  instructions: "One row per SKU and year. Sum order_count or total_quantity across years for totals."
+  verifiedStatements:
+    - question: "Which three SKUs sold the most units in 2024?"
+      answer: "SELECT sku, total_quantity FROM analytics.sku_sales_per_year WHERE year = 2024 ORDER BY total_quantity DESC LIMIT 3;"

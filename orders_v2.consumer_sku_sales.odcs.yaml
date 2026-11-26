@@ -1,0 +1,93 @@
+apiVersion: "v3.2.0"
+kind: "DataContract"
+id: "orders_v2_consumer_sku_sales"
+name: "Orders"
+version: "2.0.0"
+status: "draft"
+servers:
+  - server: "Orders"
+    type: "postgres"
+    host: "localhost"
+    port: 5433
+    database: "workshop"
+    schema: "sku_sales_input"
+schema:
+  - name: "orders"
+    synonyms:
+      - synonym: "purchases"
+      - synonym: "Bestellungen"
+        locale: "de"
+    businessName: "Schema 1"
+    logicalType: "object"
+    physicalType: "view"
+    properties:
+      - name: "order_id"
+        logicalType: "string"
+        description: ""
+        physicalType: "TEXT"
+      - name: "order_timestamp"
+        description: ""
+        logicalType: "timestamp"
+        physicalType: "TIMESTAMP"
+    quality:
+      - type: "library"
+        metric: "rowCount"
+        mustBeGreaterThan: 0
+    context:
+      instructions: "One row per order.  Join line_items on order_id to get the purchased SKUs."
+  - name: "line_items"
+    synonyms:
+      - synonym: "order lines"
+    businessName: "Schema 2"
+    logicalType: "object"
+    physicalType: "view"
+    properties:
+      - name: "order_id"
+        logicalType: "string"
+        description: ""
+        physicalType: "TEXT"
+        relationships:
+          - type: "foreignKey"
+            to: "orders.order_id"
+      - name: "sku"
+        logicalType: "string"
+        description: ""
+        physicalType: "TEXT"
+      - name: "quantity"
+        logicalType: "integer"
+        description: ""
+        physicalType: "BIGINT"
+        quality:
+          - type: "sql"
+            description: "quantity greater than 0"
+            query: "SELECT COUNT(*) FROM {schema}.${table} WHERE ${column} <= 0;"
+            mustBe: 0
+    context:
+      instructions: "One row per purchased SKU in an order."
+tags:
+  - "orders"
+  - "ecommerce"
+description:
+  purpose: "The fields the SKU Sales data product actually needs from orders_v2"
+  usage: "query as much as you want, who cares"
+  limitations: "Use it for good, don't use it for evil"
+team:
+  name: "purchasing_analytics_team"
+  members:
+    - username: "owner@example.com"
+      name: ""
+      role: "Owner"
+support:
+  - channel: "#purchases-analytics-data-help"
+    url: "https://example.slack.com/archives/purchases-analytics-data-help"
+    tool: "slack"
+slaProperties:
+  - property: "retention"
+    value: 10
+    unit: "y"
+    element: "orders.order_timestamp"
+    description: "Orders are deleted after 10 years"
+  - property: "frequency"
+    value: 1
+    unit: "d"
+    description: "Data updated daily"
