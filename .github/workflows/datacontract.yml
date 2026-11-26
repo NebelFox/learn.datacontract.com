@@ -28,6 +28,6 @@ jobs:
       - name: Lint data products
         run: |
           for file in *.odps.yaml; do
-            dataproduct lint "$file"
+            dataproduct lint --local-references "$file"
           done
 
