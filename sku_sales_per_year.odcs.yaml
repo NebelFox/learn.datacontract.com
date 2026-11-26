@@ -36,7 +36,7 @@ schema:
       - name: "total_quantity"
         logicalType: "integer"
         description: "Total units bought"
-        physicalType: "integer"
+        physicalType: "BIGINT"
         semanticType: "measure"
         transformLogic: "SUM(line_items.quantity)"
     quality:
