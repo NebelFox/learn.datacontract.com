@@ -54,7 +54,7 @@ jobs:
           BASE: origin/${{ github.base_ref }}
         run: |
           status=0
-          for file in $(git ls-tree --namy-only "$BASE" | grep '\.odcs\.yaml$'); do
+          for file in $(git ls-tree --name-only "$BASE" | grep '\.odcs\.yaml$'); do
             if [ ! -f "$file" ]; then
               echo "::error file=$file::Data contract $file was removed"
               status=1
