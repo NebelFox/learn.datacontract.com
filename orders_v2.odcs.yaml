@@ -42,7 +42,7 @@ schema:
             description: "order total is in cents"
       - name: "customer_id"
         logicalType: "string"
-        description: ""
+        description: "Identificator of the customer"
         physicalType: "TEXT"
         deprecated: true
       - name: "customer_email_address"
